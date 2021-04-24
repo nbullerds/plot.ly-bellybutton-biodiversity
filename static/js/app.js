@@ -1,26 +1,28 @@
 d3.json("samples.json").then((data) => {
 
-    console.log(data);
-
-    //update Test Subject ID dropdown
+    //Populate Test Subject ID dropdown
     var ids = data.names
     var idlist = d3.select("#selDataset");
     ids.forEach(d => {
         idlist.append("option").text(d);
     });
 
+    // On dropdown selection, re-build dashboard given new selection
     d3.select('#selDataset').on('change', function() {
         var newId = eval(d3.select(this).property('value'));
 
         var filterIndex = data.names.indexOf(newId.toString());
-        console.log(filterIndex);
 
         var metadata = data.metadata[filterIndex];
         var samples = data.samples[filterIndex];
         buildDashboard(metadata, samples);
     });
 
+    // Called at initialization and when new sample dropdown is selected
+    // Input: metadata and sample of selected value
+    // Output: N/A.  Uses data to build graphs and populate panel
     function buildDashboard(metadata, samples){
+        console.log(metadata);
         console.log(samples);
         //__________DEMOGRAPHIC INFO PANEL__________//
         // Populate summary demographic information
@@ -47,7 +49,8 @@ d3.json("samples.json").then((data) => {
             mode: 'markers',
             marker: {
                 size: sample_values.map(d => d * .7),
-                color: otu_ids
+                color: otu_ids,
+                colorscale: 'Jet'
             }
         };
             
@@ -58,6 +61,31 @@ d3.json("samples.json").then((data) => {
         };
             
         Plotly.newPlot('bubble', data, layout);
+
+        //__________GAUGE CHART__________//
+
+        var data = [{
+            domain: { x: [0, 1], y: [0, 1] },
+            value: metadata.wfreq,
+            title: { text: "<b>Bellybutton Washing Frequency</b><br>" + "Scrubs per Week"},
+            type: "indicator",
+            mode: "gauge+number",
+            gauge: {
+                axis: { range: [null, 9] },
+                steps: [
+                    { range: [0, 1], color:'#ffffff', label: "0-1"},
+                    { range: [1, 2], color:'#e6ffe6'},
+                    { range: [2, 3], color:'#ccffcc'},
+                    { range: [3, 4], color:'#99ff99'},
+                    { range: [4, 5], color:'#00ff00'},
+                    { range: [5, 6], color:'#00e600'},
+                    { range: [6, 7], color:'#00b300'},
+                    { range: [7, 8], color:'#009900'},
+                    { range: [8, 9], color:'#008000'},
+                ]
+            }
+        }];
+        Plotly.newPlot('gauge', data);
 
         //__________BAR CHART__________//
         // set x values for bar graph
